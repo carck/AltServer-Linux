@@ -13,8 +13,8 @@ on:
         default: false
   repository_dispatch:
 
-  schedule:
-    - cron: "0 */4 * * *" # min hour day week year
+  #schedule:
+  #  - cron: "0 */4 * * *" # min hour day week year
 
 
 env:
