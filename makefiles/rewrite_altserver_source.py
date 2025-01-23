@@ -129,7 +129,7 @@ void AltServerApp::ShowAlert(std::string title, std::string message)
 	std::cout << "Press any key to continue..." << std::endl;
 	//char a;
 	//std::cin >> a;
-	getchar();
+	//getchar();
 }
 
 fs::path AltServerApp::appDataDirectoryPath() const
