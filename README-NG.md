@@ -88,13 +88,30 @@ Three changes, mirroring altstoreio/AltStore#1790 and rileytestut/AltSign #51 / 
   cpprestsdk has no `http_client_config::set_keep_alive()`, so a fresh connection pool per request
   is how connection reuse is avoided.
 
+## Fix 3 — netmuxd address format
+
+netmuxd >= 0.3 reports the device `NetworkAddress` in Linux sockaddr layout (a little-endian
+`sa_family_t` first: `02 00` = AF_INET, `0a 00` = AF_INET6). The bundled 2022 libimobiledevice
+assumed the BSD layout (byte 0 = `sa_len`, byte 1 = family) and failed with
+`Unsupported address family 0x00`.
+
+`libraries/libimobiledevice/src/idevice.c` now detects both layouts, so `USBMUXD_SOCKET_ADDRESS`
+can point straight at netmuxd. A BSD-format proxy in front of netmuxd keeps working as well.
+
+## Prebuilt binaries
+
+Static binaries for x86_64, aarch64, armv7 and i586 are attached to the
+[Releases](https://github.com/jaakkopalvaila/AltServer-Linux/releases) page. Every push to `ng` also
+produces them as GitHub Actions artifacts, which expire after 90 days.
+
 ## Building
 
 Builds run in the prebuilt upstream Alpine image. On an Apple Silicon Mac, Rosetta runs the amd64
 container at native speed and a clean build takes about 30 seconds.
 
 ```bash
-cd src
+git clone --recursive -b ng https://github.com/jaakkopalvaila/AltServer-Linux
+cd AltServer-Linux
 mkdir -p build
 docker run --rm --platform linux/amd64 -v "$PWD:/workdir" -w /workdir \
   ghcr.io/nyamisty/altserver_builder_alpine_amd64:latest \
@@ -104,11 +121,12 @@ docker run --rm --platform linux/amd64 -v "$PWD:/workdir" -w /workdir \
 The result is a statically linked `build/AltServer-x86_64`. Other architectures use the
 `altserver_builder_alpine_{aarch64,armv7,i386}` images.
 
-Sanity-check that both fixes are present:
+Sanity-check that all three fixes are present:
 
 ```bash
-strings build/AltServer-x86_64 | grep -c "missing path separator"   # new ldid  -> 1
-strings build/AltServer-x86_64 | grep -c "Sanitized client info"    # login fix -> 1
+strings build/AltServer-x86_64 | grep -c "missing path separator"   # Fix 1, new ldid      -> 1
+strings build/AltServer-x86_64 | grep -c "Sanitized client info"    # Fix 2, sign-in        -> 1
+grep -c idevice_sockaddr_len libraries/libimobiledevice/src/idevice.c  # Fix 3, netmuxd  -> >= 1
 ```
 
 ## Running
@@ -123,13 +141,3 @@ ALTSERVER_ANISETTE_SERVER=http://127.0.0.1:6969 \
 
 To check sign-in without real credentials, run it with a throwaway account. HTTP 503 means Apple is
 still blocking; a GSA error such as `-20101` or `-20209` means the request reached the service.
-
-## Fix 3 — netmuxd address format
-
-netmuxd >= 0.3 reports the device `NetworkAddress` in Linux sockaddr layout (a little-endian
-`sa_family_t` first: `02 00` = AF_INET, `0a 00` = AF_INET6). The bundled 2022 libimobiledevice
-assumed the BSD layout (byte 0 = `sa_len`, byte 1 = family) and failed with
-`Unsupported address family 0x00`.
-
-`libraries/libimobiledevice/src/idevice.c` now detects both layouts, so `USBMUXD_SOCKET_ADDRESS`
-can point straight at netmuxd. A BSD-format proxy in front of netmuxd keeps working as well.
