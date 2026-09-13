@@ -1,3 +1,5 @@
+**This fork (`ng` branch) fixes iOS 26.4+/27 signing, the September 2026 Apple ID sign-in block, and netmuxd >= 0.3 addressing. See [README-NG.md](README-NG.md).**
+
 # AltServer-Linux
 AltServer for AltStore, but on-device
 

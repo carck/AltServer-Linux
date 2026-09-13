@@ -13,8 +13,6 @@ on:
         default: false
   repository_dispatch:
 
-  schedule:
-    - cron: "0 */4 * * *" # min hour day week year
 
 
 env:
@@ -64,9 +62,6 @@ jobs:
             echo "::set-output name=updated::0"
           fi
 
-      - uses: gautamkrishnar/keepalive-workflow@master
-        with:
-          commit_message: "[proj] keepalive-workflow auto commit"
     outputs:
       updated: ${{ steps.check.outputs.updated }}
 
