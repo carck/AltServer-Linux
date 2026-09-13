@@ -100,22 +100,28 @@ jobs:
           cp build/AltServer-* /tmp/build_output; chmod +x /tmp/build_output/*
           sudo rm -rf build
           git clean -fdX
+      - name: Artifact name
+        id: artname
+        run: echo "name=$(basename /tmp/build_output/AltServer-*)" >> "$GITHUB_OUTPUT"
       - name: Upload to github artifact
-        uses: NyaMisty/upload-artifact-as-is@master
+        uses: actions/upload-artifact@v4
         with:
-          path: /tmp/build_output
+          name: ${{ steps.artname.outputs.name }}
+          path: /tmp/build_output/*
 
   release:
     runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
     needs: [build]
     name: "release"
+    permissions:
+      contents: write
     steps:
     - name: "Create artifact directory"
       run: |
         mkdir -p build_output
     - name: "Download all artifacts"
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         path: build_output
     - name: "Rearrange artifacts"
@@ -126,7 +132,7 @@ jobs:
         ls build_release
         if [ "$(ls -A build_release)" ]; then exit 0; else exit 1; fi
     - name: Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: build_release/*
       env:
