@@ -57,6 +57,27 @@ std::string GetAnisetteURL() {
 	return U("https://armconverter.com/anisette/irGb3Quww8zrhgqnzmrx");
 }
 
+// Apple rejects any gsa.apple.com request whose X-Mme-Client-Info (aka
+// "client info" / device description) header contains the substring
+// "com.apple.dt.Xcode" with a 503. Replace every occurrence with
+// "com.apple.akd" so no AnisetteData built from this manager ever leaks
+// that string to Apple, regardless of what the anisette server returns.
+std::string SanitizeClientInfo(const std::string& clientInfo)
+{
+	static const std::string needle = "com.apple.dt.Xcode";
+	static const std::string replacement = "com.apple.akd";
+
+	std::string result = clientInfo;
+	size_t pos = 0;
+	while ((pos = result.find(needle, pos)) != std::string::npos)
+	{
+		result.replace(pos, needle.length(), replacement);
+		pos += replacement.length();
+	}
+
+	return result;
+}
+
 std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
 {
 	// auto client = web::http::client::http_client(U("https://armconverter.com"));
@@ -125,6 +146,9 @@ std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
 				tv.tv_sec = ts;
 				tv.tv_usec = 0;
 
+				std::string sanitizedClientInfo = SanitizeClientInfo(jsonVal.at("X-MMe-Client-Info").as_string());
+				odslog("Sanitized client info: " << sanitizedClientInfo);
+
 				odslog("Building anisetteData obj...");
 				anisetteData = std::make_shared<AnisetteData>(
 					jsonVal.at("X-Apple-I-MD-M").as_string(),
@@ -133,7 +157,7 @@ std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
 					std::atoi(jsonVal.at("X-Apple-I-MD-RINFO").as_string().c_str()),
 					jsonVal.at("X-Mme-Device-Id").as_string(),
 					jsonVal.at("X-Apple-I-SRL-NO").as_string(),
-					jsonVal.at("X-MMe-Client-Info").as_string(),
+					sanitizedClientInfo,
 					tv,
 					jsonVal.at("X-Apple-Locale").as_string(),
 					jsonVal.at("X-Apple-I-TimeZone").as_string());
