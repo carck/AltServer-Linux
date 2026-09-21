@@ -1,0 +1,30 @@
+name: Build AltServer ARM64 Native
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build on native ARM64
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Build AltServer
+        run: ./build_arm64.sh
+
+      - name: Upload ARM64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AltServer-linux-arm64
+          path: build_output/AltServer-*
+          if-no-files-found: error

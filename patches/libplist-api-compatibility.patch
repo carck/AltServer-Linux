@@ -1,0 +1,69 @@
+diff --git a/AltServer/AltServerApp.cpp b/AltServer/AltServerApp.cpp
+index a034807..f4592f5 100755
+--- a/AltServer/AltServerApp.cpp
++++ b/AltServer/AltServerApp.cpp
+@@ -1333,7 +1333,7 @@ pplx::task<std::shared_ptr<Application>> AltServerApp::InstallApp(std::shared_pt
+                auto data = readFile(infoPlistPath.string().c_str());
+ 
+                plist_t plist = nullptr;
+-               plist_from_memory((const char*)data.data(), (int)data.size(), &plist);
++               plist_from_memory((const char*)data.data(), (int)data.size(), &plist, NULL);
+                if (plist == nullptr)
+                {
+                        throw InstallError(InstallErrorCode::MissingInfoPlist);
+@@ -1370,7 +1370,7 @@ pplx::task<std::shared_ptr<Application>> AltServerApp::InstallApp(std::shared_pt
+         auto data = readFile(infoPlistPath.string().c_str());
+         
+         plist_t plist = nullptr;
+-        plist_from_memory((const char *)data.data(), (int)data.size(), &plist);
++               plist_from_memory((const char *)data.data(), (int)data.size(), &plist, NULL);
+         if (plist == nullptr)
+         {
+             throw InstallError(InstallErrorCode::MissingInfoPlist);
+diff --git a/AltSign/Application.cpp b/AltSign/Application.cpp
+index 6684336..f316748 100755
+--- a/AltSign/Application.cpp
++++ b/AltSign/Application.cpp
+@@ -68,7 +68,7 @@ Application::Application(std::string appBundlePath)
+        auto plistData = readFile(path.string().c_str());
+ 
+     plist_t plist = nullptr;
+-    plist_from_memory((const char *)plistData.data(), (int)plistData.size(), &plist);
++       plist_from_memory((const char *)plistData.data(), (int)plistData.size(), &plist, NULL);
+     if (plist == nullptr)
+     {
+         throw SignError(SignErrorCode::InvalidApp);
+@@ -197,7 +197,7 @@ std::map<std::string, plist_t> Application::entitlements()
+                auto rawEntitlements = this->entitlementsString();
+ 
+                plist_t plist = nullptr;
+-               plist_from_memory((const char*)rawEntitlements.data(), (int)rawEntitlements.size(), &plist);
++               plist_from_memory((const char*)rawEntitlements.data(), (int)rawEntitlements.size(), &plist, NULL);
+ 
+                if (plist != nullptr)
+                {
+diff --git a/AltSign/Archiver.cpp b/AltSign/Archiver.cpp
+index 1693220..eabb832 100755
+--- a/AltSign/Archiver.cpp
++++ b/AltSign/Archiver.cpp
+@@ -8,6 +8,7 @@
+ 
+ #include <filesystem>
+ #include <fstream>
++#include <vector>
+ 
+ #include "Archiver.hpp"
+ #include "Error.hpp"
+diff --git a/AltSign/ProvisioningProfile.cpp b/AltSign/ProvisioningProfile.cpp
+index a1cba32..4c6d40e 100755
+--- a/AltSign/ProvisioningProfile.cpp
++++ b/AltSign/ProvisioningProfile.cpp
+@@ -279,6 +279,6 @@ void ProvisioningProfile::ParseData(std::vector<unsigned char> &encodedData)
+     pointer = advanceToNextItem(pointer);
+     
+     plist_t parsedPlist = nullptr;
+-    plist_from_memory((const char *)pointer, (unsigned int)length, &parsedPlist);
++    plist_from_memory((const char *)pointer, (unsigned int)length, &parsedPlist, NULL);
+     
+     if (parsedPlist == nullptr)
+     {
