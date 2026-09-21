@@ -76,7 +76,10 @@ install_native_packages() {
     run_privileged apt-get update
     run_privileged apt-get install -y \
         build-essential clang cmake curl git ninja-build pkg-config unzip \
-        uuid-dev libboost-filesystem-dev libboost-system-dev libssl-dev zlib1g-dev
+        uuid-dev libboost-atomic-dev libboost-chrono-dev \
+        libboost-date-time-dev libboost-filesystem-dev libboost-random-dev \
+        libboost-regex-dev libboost-system-dev \
+        libboost-thread-dev libssl-dev zlib1g-dev
 }
 
 build_corecrypto() {
@@ -105,7 +108,7 @@ build_corecrypto() {
         sed -i 's|"corecrypto_static/ccrng_static.c"|"ccrng_static.c"|' \
             "$source_dir/CoreCryptoSources.cmake"
     fi
-    cmake -S "$source_dir" -B "$build_dir" \
+    CC=clang CXX=clang++ cmake -S "$source_dir" -B "$build_dir" \
         -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PREFIX" \
         -DCODE_COVERAGE=OFF
     sed -i -E '/^all: CMakeFiles\/(corecrypto_perf|corecrypto_test)/d' \
@@ -127,6 +130,8 @@ build_cpprestsdk() {
     fi
     cmake -S "$source_dir" -B "$build_dir" \
         -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTS=OFF \
+        -DWERROR=OFF \
         -DCMAKE_CXX_FLAGS="-Wno-error=format-truncation" \
         -DCMAKE_INSTALL_PREFIX="$PREFIX"
     cmake --build "$build_dir" -j"$JOBS"
@@ -155,9 +160,9 @@ apply_git_patches() {
     while read -r repo_dir patch_file; do
         patch_file="$ROOT_DIR/patches/$patch_file"
         [[ -f "$patch_file" ]] || continue
-        if git -C "$ROOT_DIR/$repo_dir" apply --check "$patch_file"; then
-            git -C "$ROOT_DIR/$repo_dir" apply "$patch_file"
-        elif git -C "$ROOT_DIR/$repo_dir" apply --reverse --check "$patch_file"; then
+        if git -C "$ROOT_DIR/$repo_dir" apply --ignore-whitespace --check "$patch_file"; then
+            git -C "$ROOT_DIR/$repo_dir" apply --ignore-whitespace "$patch_file"
+        elif git -C "$ROOT_DIR/$repo_dir" apply --ignore-whitespace --reverse --check "$patch_file"; then
             echo "Patch already applied: $patch_file"
         else
             echo "Patch does not apply cleanly: $patch_file" >&2
