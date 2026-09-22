@@ -17,6 +17,14 @@ content = content.replace(b'"%FT%T%z"', b'"%Y-%m-%dT%H:%M:%SZ"')
 content = content.replace(b'localtime(', b'gmtime(')
 
 content = content.replace(b'winsock2.h', b'WinSock2.h')
+content = content.replace(b'"akd/1.0 CFNetwork/978.0.7 Darwin/18.7.0"', b'"AuthKit/1 (Macintosh; OS X 26.5.2) (com.apple.dt.Xcode/26.0)"')
+content = content.replace(
+    b'plist_from_xml((const char *)decryptedData->data(), (int)decryptedData->size(), &decryptedPlist);',
+    b'plist_format_t decryptedFormat = PLIST_FORMAT_NONE;\n'
+    b'\tplist_err_t decryptedPlistError = plist_from_memory((const char *)decryptedData->data(), (int)decryptedData->size(), &decryptedPlist, &decryptedFormat);')
+content = content.replace(
+    b'odslog("ERROR: Could not parse decrypted login response plist!");',
+    b'odslog("ERROR: Could not parse decrypted login response plist (error=" << (int)decryptedPlistError << ", format=" << (int)decryptedFormat << ", size=" << decryptedData->size() << " bytes).");')
 
 # --- Give every GrandSlam request its own TCP connection -------------------------------
 #
