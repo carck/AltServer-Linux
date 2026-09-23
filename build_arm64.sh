@@ -171,7 +171,6 @@ apply_git_patches() {
     done <<'PATCHES'
 upstream_repo altserver-windows-62a7a2b.patch
 upstream_repo libplist-api-compatibility.patch
-libraries/libimobiledevice libimobiledevice-plist-format.patch
 PATCHES
 }
 
