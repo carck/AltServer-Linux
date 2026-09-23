@@ -1,19 +1,6 @@
 name: Build AltServer
 
 on:
-  push:
-    paths:
-      - '.github/workflows/build.yml'
-      - '.github/workflows/build_arm64_native.yml'
-      - '.gitmodules'
-      - 'Makefile'
-      - 'makefiles/**'
-      - 'src/**'
-      - 'shims/**'
-      - 'libraries/**'
-      - 'upstream_repo'
-      - 'scripts/**'
-      - 'buildenv/**'
   workflow_dispatch:
 
 

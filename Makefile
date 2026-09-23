@@ -4,7 +4,7 @@ ARCH := $(shell gcc -dumpmachine | cut -d- -f 1)
 
 PROGRAM := $(PROGRAM)-$(ARCH)
 
-CFLAGS := -DDEBUG -O0 -g
+CFLAGS := -O2
 
 ifeq ($(ARCH),i386)
 CFLAGS += -mno-default
