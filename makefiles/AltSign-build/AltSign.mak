@@ -12,7 +12,7 @@ LDID_NEWROOT := $(BUILD_DIR)/ldid_patched
 
 include $(MAIN_DIR)/makefiles/AltWindowsShim.mak
 
-CFLAGS += -I$(ALTSIGN_ROOT) -I$(MINIZIP_ROOT) -I$(LDID_ROOT) -I$(ALTSIGN_ROOT)/Dependencies
+CFLAGS += -I$(ALTSIGN_ROOT) -I$(MINIZIP_ROOT) -I$(LDID_ROOT)
 TARGET_ARCH := $(shell $(CXX) -dumpmachine | cut -d- -f1)
 ifneq ($(filter x86_64 i386 i686,$(TARGET_ARCH)),)
 CFLAGS += -mno-sse
