@@ -44,7 +44,7 @@ index 374fddb..65401df 100755
          // Zip app back up.
          if (ipaPath.has_value())
 diff --git a/ldid/ldid.cpp b/ldid/ldid.cpp
-index bf22bb8..f077c81 100755
+index dc01156..f077c81 100755
 --- a/ldid/ldid.cpp
 +++ b/ldid/ldid.cpp
 @@ -19,19 +19,18 @@
@@ -1452,7 +1452,7 @@ index bf22bb8..f077c81 100755
  #define CSSLOT_ALTERNATE     uint32_t(0x01000)
  
  #define CSSLOT_SIGNATURESLOT uint32_t(0x10000)
-@@ -902,2433 +1045,2772 @@ public:
+@@ -902,2447 +1045,2772 @@ public:
  #define CS_HASHTYPE_SHA256_160 3
  #define CS_HASHTYPE_SHA386_386 4
  
@@ -1617,13 +1617,27 @@ index bf22bb8..f077c81 100755
 -
 -	uint8_t totalLength()
 -	{
--		return this->length + 2;
+-		if (this->length > CHAR_MAX)
+-		{
+-			return this->length + 3;
+-		}
+-		else
+-		{
+-			return this->length + 2;
+-		}
 -	}
 -
 -	std::string data()
 -	{
 -		std::stringbuf data;
 -		put(data, (char*)& this->padding, 1);
+-
+-		if (this->length > CHAR_MAX)
+-		{
+-			uint32_t byte = 0x81;
+-			put(data, (char*)&byte, 1);
+-		}
+-
 -		put(data, (char*)& this->length, 1);
 -		put(data, this->key.data().data(), this->key.totalLength());
 -

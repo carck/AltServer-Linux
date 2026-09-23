@@ -18,6 +18,8 @@ content = content.replace(b'localtime(', b'gmtime(')
 
 content = content.replace(b'winsock2.h', b'WinSock2.h')
 content = content.replace(b'"akd/1.0 CFNetwork/978.0.7 Darwin/18.7.0"', b'"AuthKit/1 (Macintosh; OS X 26.5.2) (com.apple.dt.Xcode/26.0)"')
+if b'std::vector' in content and b'#include <vector>' not in content:
+    content = b'#include <vector>\n' + content
 content = content.replace(
     b'plist_from_xml((const char *)decryptedData->data(), (int)decryptedData->size(), &decryptedPlist);',
     b'plist_format_t decryptedFormat = PLIST_FORMAT_NONE;\n'

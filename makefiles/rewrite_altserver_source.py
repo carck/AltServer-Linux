@@ -16,6 +16,10 @@ content = content.replace(b'std::string_convert', b'std::wstring_convert')
 
 content = content.replace(b'boost/filesystem.hpp', b'filesystem')
 content = content.replace(b'boost::filesystem', b'std::filesystem')
+content = content.replace(b'#include <libimobiledevice/src/idevice.h>', b'//#include <libimobiledevice/src/idevice.h>')
+content = content.replace(b'device->conn_type == CONNECTION_USBMUXD', b'false')
+if b'std::shared_ptr' in content and b'#include <memory>' not in content:
+	content = b'#include <memory>\n' + content
 
 if F.endswith('AltServerApp.cpp'):
 

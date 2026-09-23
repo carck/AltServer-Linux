@@ -1,0 +1,61 @@
+name: Build AltServer
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build.yml'
+      - '.github/workflows/build_arm64_native.yml'
+      - '.gitmodules'
+      - 'Makefile'
+      - 'makefiles/**'
+      - 'src/**'
+      - 'shims/**'
+      - 'libraries/**'
+      - 'upstream_repo'
+      - 'scripts/**'
+      - 'buildenv/**'
+  workflow_dispatch:
+
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64
+            builder: ghcr.io/nyamisty/altserver_builder_alpine_aarch64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare build
+        run: mkdir /tmp/build_output
+      - name: Build
+        run: |
+          image=${{ matrix.builder }}
+          docker pull $image
+          docker run -v ${PWD}:/workdir -w /workdir $image bash -c 'chmod +x build_arm64.sh && ./build_arm64.sh --skip-dependencies -j 1'
+          cp build/AltServer-* /tmp/build_output; chmod +x /tmp/build_output/*
+          sudo rm -rf build
+          git clean -fdX
+      - name: Upload to github artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}
+          path: /tmp/build_output
+        

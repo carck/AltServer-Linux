@@ -155,19 +155,19 @@ build_libzip() {
 
 apply_git_patches() {
     local repo_dir
+    local repo_path
     local patch_file
 
     while read -r repo_dir patch_file; do
         patch_file="$ROOT_DIR/patches/$patch_file"
         [[ -f "$patch_file" ]] || continue
-        if git -C "$ROOT_DIR/$repo_dir" apply --ignore-whitespace --check "$patch_file"; then
-            git -C "$ROOT_DIR/$repo_dir" apply --ignore-whitespace "$patch_file"
-        elif git -C "$ROOT_DIR/$repo_dir" apply --ignore-whitespace --reverse --check "$patch_file"; then
-            echo "Patch already applied: $patch_file"
-        else
+        repo_path="$ROOT_DIR/$repo_dir"
+        git -C "$repo_path" reset --hard HEAD
+        if ! git -C "$repo_path" apply --ignore-whitespace --check "$patch_file"; then
             echo "Patch does not apply cleanly: $patch_file" >&2
             exit 1
         fi
+        git -C "$repo_path" apply --ignore-whitespace "$patch_file"
     done <<'PATCHES'
 upstream_repo altserver-windows-62a7a2b.patch
 upstream_repo libplist-api-compatibility.patch
