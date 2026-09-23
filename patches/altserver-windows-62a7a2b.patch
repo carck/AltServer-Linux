@@ -2,7 +2,7 @@ diff --git a/AltSign/Signer.cpp b/AltSign/Signer.cpp
 index 374fddb..65401df 100755
 --- a/AltSign/Signer.cpp
 +++ b/AltSign/Signer.cpp
-@@ -274,8 +274,23 @@ void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningP
+@@ -274,8 +274,30 @@ void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningP
  		}
          
          // Sign application
@@ -12,6 +12,8 @@ index 374fddb..65401df 100755
 +
 +        struct ALTProgress : ldid::Progress
 +        {
++            mutable int lastProgressBucket = -1;
++
 +            void operator()(const std::string& value) const override
 +            {
 +                odslog("Signing: " << value);
@@ -19,7 +21,12 @@ index 374fddb..65401df 100755
 +
 +            void operator()(double value) const override
 +            {
-+                odslog("Signing Progress: " << value);
++                int progressBucket = static_cast<int>(value * 10.0);
++                if (progressBucket != lastProgressBucket)
++                {
++                    lastProgressBucket = progressBucket;
++                    odslog("Signing Progress: " << progressBucket * 10 << "%");
++                }
 +            }
 +        };
 +
