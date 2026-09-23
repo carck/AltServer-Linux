@@ -7,7 +7,7 @@ index 374fddb..65401df 100755
          
          // Sign application
 -        ldid::DiskFolder appBundle(app.path());
-+        ldid::DiskFolder appBundle(app.path() + "\\");
++        ldid::DiskFolder appBundle(app.path() + fs::path::preferred_separator);
          std::string key = CertificatesContent(this->certificate());
 +
 +        struct ALTProgress : ldid::Progress

@@ -157,12 +157,16 @@ apply_git_patches() {
     local repo_dir
     local repo_path
     local patch_file
+    declare -A reset_repos=()
 
     while read -r repo_dir patch_file; do
         patch_file="$ROOT_DIR/patches/$patch_file"
         [[ -f "$patch_file" ]] || continue
         repo_path="$ROOT_DIR/$repo_dir"
-        git -C "$repo_path" reset --hard HEAD
+        if [[ -z "${reset_repos[$repo_dir]+set}" ]]; then
+            git -C "$repo_path" reset --hard HEAD
+            reset_repos[$repo_dir]=1
+        fi
         if ! git -C "$repo_path" apply --ignore-whitespace --check "$patch_file"; then
             echo "Patch does not apply cleanly: $patch_file" >&2
             exit 1
