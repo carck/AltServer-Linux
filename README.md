@@ -16,7 +16,7 @@ Usage:  AltServer-Linux options [ ipa-file ]
 
 The following environment var can be set for some special situation:
   - ALTSERVER_ANISETTE_SERVER: Set to custom anisette server URL
-          if not set, the default one: https://armconverter.com/anisette/irGb3Quww8zrhgqnzmrx, is used
+          if not set, the default one: https://ani.sidestore.io, is used
   - ALTSERVER_NO_SUBSCRIBE: (*unused*) Please enable this for usbmuxd server that do not correctly usbmuxd_listen interfaces
 ```
 

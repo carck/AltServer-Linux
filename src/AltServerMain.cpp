@@ -19,6 +19,7 @@
 // AltSign
 #include "DeviceManager.hpp"
 #include "Error.hpp"
+#include "AppleAPI.hpp"
 
 #include "AltServerApp.h"
 
@@ -79,12 +80,13 @@ void print_help() {
 			"  -h  --help             Display this usage information.\n"
 			"  -u  --udid UDID        Device's UDID, only needed when installing IPA.\n"
 			"  -a  --appleID AppleID  Apple ID to sign the ipa, only needed when installing IPA.\n"
-			"  -p  --password passwd  Password of Apple ID, only needed when installing IPA.\n"
+			"  -p  --password passwd  Password of Apple ID; prompted securely if omitted.\n"
+			"  -t  --test-auth        Authenticate with Apple and exit. Requires -a.\n"
 			"  -d  --debug            Print debug output, can be used several times to increase debug level.\n"
 			"\n"
 			"The following environment var can be set for some special situation:\n"
 			"  - ALTSERVER_ANISETTE_SERVER: Set to custom anisette server URL\n"
-			"          if not set, the default one: https://armconverter.com/anisette/irGb3Quww8zrhgqnzmrx, is used\n"
+			"          if not set, the default one: https://ani.sidestore.io, is used\n"
 			"  - ALTSERVER_NO_SUBSCRIBE: (*unused*) Please enable this for usbmuxd server that do not correctly usbmuxd_listen interfaces\n"
 			);
 }
@@ -98,23 +100,25 @@ int main(int argc, char *argv[]) {
           //{"ipaddr",	required_argument,		0, 'i'},
 		  //{"pairData",	required_argument,      0, 'P'},
 		  {"debug",		no_argument,      		0, 'd'},
-          {0, 0, 0, 0}
+		  {"test-auth", no_argument, 0, 't'},
+		  {0, 0, 0, 0}
         };
 	
-	char *udid;
-	char *ipaddr;
-	char *appleID;
-	char *password;
-	char *pairDataFile;
+	char *udid = NULL;
+	char *ipaddr = NULL;
+	char *appleID = NULL;
+	char *password = NULL;
+	char *pairDataFile = NULL;
 	
 	char *ipaPath = NULL;
 	int debugLogLevel = 0;
+	bool testAuth = false;
 
 	while (1) {
 		int this_option_optind = optind ? optind : 1;
 		int option_index = 0;
 
-		int c = getopt_long (argc, argv, "u:i:a:p:P:d",
+		int c = getopt_long (argc, argv, "u:i:a:p:P:dt",
 						long_options, &option_index);
 		if (c == -1) break;
 
@@ -127,6 +131,7 @@ int main(int argc, char *argv[]) {
 			break;
         case 'a':
 			appleID = optarg;
+			break;
         case 'p':
             password = optarg;
 			break;
@@ -136,6 +141,9 @@ int main(int argc, char *argv[]) {
 		case 'd':
 			//debugLog = true;
 			debugLogLevel++;
+			break;
+		case 't':
+			testAuth = true;
 			break;
 		case 'h':
 			print_help();
@@ -153,7 +161,9 @@ int main(int argc, char *argv[]) {
 
 	bool installApp = true;
 	if (optind == argc) {
-		printf("Not supplying ipa, running in server mode!\n");
+		if (!testAuth) {
+			printf("Not supplying ipa, running in server mode!\n");
+		}
         installApp = false;
     } else if (optind + 1 == argc) {
 		ipaPath = argv[optind];
@@ -168,6 +178,14 @@ int main(int argc, char *argv[]) {
 	setvbuf(stdin, NULL, _IONBF, 0); 
     setvbuf(stdout, NULL, _IONBF, 0); 
     setvbuf(stderr, NULL, _IONBF, 0); 
+
+	if (password == NULL && (testAuth || installApp)) {
+		password = getpass("Apple ID password: ");
+		if (password == NULL) {
+			printf("Unable to read Apple ID password.\n");
+			return 1;
+		}
+	}
 	
 	srand(time(NULL));
 
@@ -177,6 +195,42 @@ int main(int argc, char *argv[]) {
 	}
     
 	signal(SIGPIPE, SIG_IGN);
+
+	if (testAuth) {
+		if (appleID == NULL || optind != argc) {
+			printf("Test authentication requires -a/--appleID, with no IPA file.\n");
+			return 1;
+		}
+
+		try
+		{
+			odslog("Fetching anisette data...");
+			auto anisetteData = AnisetteDataManager::instance()->FetchAnisetteData();
+			auto verificationHandler = [=](void)->pplx::task<std::optional<std::string>> {
+				return pplx::create_task([]() -> std::optional<std::string> {
+					std::cout << "Enter two factor code" << std::endl;
+					std::string verificationCode;
+					std::cin >> verificationCode;
+					return verificationCode;
+				});
+			};
+			auto task = AppleAPI::getInstance()->Authenticate(
+				appleID, password, anisetteData, verificationHandler);
+			task.get();
+			odslog("Authentication succeeded.");
+			return 0;
+		}
+		catch (Error& error)
+		{
+			odslog("Authentication failed: " << error.domain() << " (" << error.code() << ").")
+		}
+		catch (std::exception& exception)
+		{
+			odslog("Authentication failed: " << exception.what());
+		}
+
+		return 1;
+	}
 
 	if (installApp) {
 		odslog("Installing app...");

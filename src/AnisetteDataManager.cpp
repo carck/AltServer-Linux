@@ -54,7 +54,20 @@ std::string GetAnisetteURL() {
 	if (server) {
 		return server;
 	}
-	return U("https://armconverter.com/anisette/irGb3Quww8zrhgqnzmrx");
+	return U("https://ani.sidestore.io");
+}
+
+static std::string NormalizeClientInfo(std::string clientInfo)
+{
+	const std::string blockedXcodeID = "com.apple.dt.Xcode/3594.4.19";
+	const std::string acceptedAuthKitID = "com.apple.akd/1.0";
+	const auto position = clientInfo.find(blockedXcodeID);
+	if (position != std::string::npos)
+	{
+		clientInfo.replace(position, blockedXcodeID.size(), acceptedAuthKitID);
+		odslog("Normalized anisette client info bundle id from Xcode to akd");
+	}
+	return clientInfo;
 }
 
 std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
@@ -133,7 +146,7 @@ std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
 					std::atoi(jsonVal.at("X-Apple-I-MD-RINFO").as_string().c_str()),
 					jsonVal.at("X-Mme-Device-Id").as_string(),
 					jsonVal.at("X-Apple-I-SRL-NO").as_string(),
-					jsonVal.at("X-MMe-Client-Info").as_string(),
+					NormalizeClientInfo(jsonVal.at("X-MMe-Client-Info").as_string()),
 					tv,
 					jsonVal.at("X-Apple-Locale").as_string(),
 					jsonVal.at("X-Apple-I-TimeZone").as_string());
