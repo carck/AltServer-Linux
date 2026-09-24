@@ -69,6 +69,24 @@ std::vector<unsigned char> readFile(const char* filename)
 	return vec;
 }
 
+std::string readPasswordFile(const char* filename)
+{
+	std::ifstream passwordFile(filename, std::ios::binary);
+	if (!passwordFile) {
+		return {};
+	}
+
+	std::string password;
+	password.assign(std::istreambuf_iterator<char>(passwordFile),
+		std::istreambuf_iterator<char>());
+	while (!password.empty() &&
+		(password.back() == '\n' || password.back() == '\r')) {
+		password.pop_back();
+	}
+
+	return password;
+}
+
 #define BOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED
 #include <boost/stacktrace.hpp>
 
@@ -81,6 +99,7 @@ void print_help() {
 			"  -u  --udid UDID        Device's UDID, only needed when installing IPA.\n"
 			"  -a  --appleID AppleID  Apple ID to sign the ipa, only needed when installing IPA.\n"
 			"  -p  --password passwd  Password of Apple ID; prompted securely if omitted.\n"
+			"  -P  --password-file file  Read the Apple ID password from file.\n"
 			"  -t  --test-auth        Authenticate with Apple and exit. Requires -a.\n"
 			"  -d  --debug            Print debug output, can be used several times to increase debug level.\n"
 			"\n"
@@ -101,6 +120,7 @@ int main(int argc, char *argv[]) {
 		  //{"pairData",	required_argument,      0, 'P'},
 		  {"debug",		no_argument,      		0, 'd'},
 		  {"test-auth", no_argument, 0, 't'},
+		  {"password-file", required_argument, 0, 'P'},
 		  {0, 0, 0, 0}
         };
 	
@@ -108,7 +128,7 @@ int main(int argc, char *argv[]) {
 	char *ipaddr = NULL;
 	char *appleID = NULL;
 	char *password = NULL;
-	char *pairDataFile = NULL;
+	std::string passwordFromFile;
 	
 	char *ipaPath = NULL;
 	int debugLogLevel = 0;
@@ -118,7 +138,7 @@ int main(int argc, char *argv[]) {
 		int this_option_optind = optind ? optind : 1;
 		int option_index = 0;
 
-		int c = getopt_long (argc, argv, "u:i:a:p:P:dt",
+		int c = getopt_long (argc, argv, "u:i:a:p:P:dth",
 						long_options, &option_index);
 		if (c == -1) break;
 
@@ -136,7 +156,12 @@ int main(int argc, char *argv[]) {
             password = optarg;
 			break;
 		case 'P':
-            pairDataFile = optarg;
+			passwordFromFile = readPasswordFile(optarg);
+			if (passwordFromFile.empty()) {
+				printf("Unable to open password file.\n");
+				exit(1);
+			}
+			password = passwordFromFile.data();
 			break;
 		case 'd':
 			//debugLog = true;
