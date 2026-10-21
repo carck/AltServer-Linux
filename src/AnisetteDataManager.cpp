@@ -59,15 +59,7 @@ std::string GetAnisetteURL() {
 
 static std::string NormalizeClientInfo(std::string clientInfo)
 {
-	const std::string blockedXcodeID = "com.apple.dt.Xcode/3594.4.19";
-	const std::string acceptedAuthKitID = "com.apple.akd/1.0";
-	const auto position = clientInfo.find(blockedXcodeID);
-	if (position != std::string::npos)
-	{
-		clientInfo.replace(position, blockedXcodeID.size(), acceptedAuthKitID);
-		odslog("Normalized anisette client info bundle id from Xcode to akd");
-	}
-	return clientInfo;
+	return "<PC> <Windows;6.2(0,0);9200> <com.apple.AuthKit/1 (com.apple.akd/1.0)>";
 }
 
 std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
